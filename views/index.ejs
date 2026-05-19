@@ -1,0 +1,190 @@
+<%- include('partials/header.ejs'); -%>
+
+<div class="app-wrapper">
+
+  <!-- ── Sidebar ───────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-icon">✓</span>
+      <span class="brand-name">Permalist</span>
+    </div>
+
+    <div class="stats-grid">
+      <a href="/?filter=all" class="stat-card <%= filter === 'all' ? 'active' : '' %>">
+        <span class="stat-num"><%= stats.total %></span>
+        <span class="stat-label">Total</span>
+      </a>
+      <a href="/?filter=active" class="stat-card <%= filter === 'active' ? 'active' : '' %>">
+        <span class="stat-num"><%= stats.active %></span>
+        <span class="stat-label">Active</span>
+      </a>
+      <a href="/?filter=completed" class="stat-card <%= filter === 'completed' ? 'active' : '' %>">
+        <span class="stat-num"><%= stats.completed %></span>
+        <span class="stat-label">Done</span>
+      </a>
+      <a href="/?filter=overdue" class="stat-card overdue-card <%= filter === 'overdue' ? 'active' : '' %>">
+        <span class="stat-num"><%= stats.overdue %></span>
+        <span class="stat-label">Overdue</span>
+      </a>
+    </div>
+
+    <!-- Category filter -->
+    <div class="sidebar-section">
+      <p class="sidebar-label">Categories</p>
+      <a href="/?filter=<%= filter %>" class="cat-chip <%= !category ? 'active' : '' %>">All</a>
+      <% for(let cat of categories){ %>
+        <a href="/?filter=<%= filter %>&category=<%= encodeURIComponent(cat) %>" class="cat-chip <%= category === cat ? 'active' : '' %>"><%= cat %></a>
+      <% } %>
+    </div>
+
+    <!-- Sort -->
+    <div class="sidebar-section">
+      <p class="sidebar-label">Sort by</p>
+      <div class="sort-group">
+        <a href="?filter=<%= filter %>&category=<%= category %>&sort=id" class="sort-btn <%= sort === 'id' ? 'active' : '' %>">Date Added</a>
+        <a href="?filter=<%= filter %>&category=<%= category %>&sort=priority" class="sort-btn <%= sort === 'priority' ? 'active' : '' %>">Priority</a>
+        <a href="?filter=<%= filter %>&category=<%= category %>&sort=due_date" class="sort-btn <%= sort === 'due_date' ? 'active' : '' %>">Due Date</a>
+      </div>
+    </div>
+
+    <% if (parseInt(stats.completed) > 0) { %>
+    <form action="/clear-completed" method="post" class="clear-form">
+      <button type="submit" class="clear-btn" onclick="return confirm('Remove all completed tasks?')">
+        🗑 Clear Completed
+      </button>
+    </form>
+    <% } %>
+  </aside>
+
+  <!-- ── Main content ───────────────────────────── -->
+  <section class="content">
+
+    <header class="content-header">
+      <div>
+        <h1 class="page-title">
+          <% if(filter === 'completed') { %>Done ✓
+          <% } else if(filter === 'overdue') { %>Overdue ⚠
+          <% } else if(filter === 'active') { %>In Progress
+          <% } else { %>Today's List
+          <% } %>
+        </h1>
+        <p class="page-sub"><%= new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) %></p>
+      </div>
+    </header>
+
+    <!-- ── Add form ───────────────────────────────── -->
+    <div class="add-card">
+      <form class="add-form" action="/add" method="post">
+        <div class="add-row-main">
+          <input type="text" name="newItem" placeholder="What needs to be done?" autocomplete="off" autofocus required class="add-input" />
+          <button type="submit" class="add-btn">+ Add</button>
+        </div>
+        <div class="add-row-meta">
+          <select name="priority" class="meta-select">
+            <option value="low">🟢 Low</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="high">🔴 High</option>
+          </select>
+          <input type="text" name="category" placeholder="Category (e.g. Work)" class="meta-input" list="cat-list" />
+          <datalist id="cat-list">
+            <% for(let cat of categories){ %><option value="<%= cat %>"><% } %>
+          </datalist>
+          <input type="date" name="due_date" class="meta-input date-input" />
+        </div>
+      </form>
+    </div>
+
+    <!-- ── Task list ──────────────────────────────── -->
+    <div class="task-list">
+      <% if(listItems.length === 0){ %>
+        <div class="empty-state">
+          <span class="empty-icon">🎉</span>
+          <p>Nothing here! Add a task above.</p>
+        </div>
+      <% } %>
+
+      <% for(let item of listItems){ %>
+      <div class="task-card <%= item.completed ? 'completed' : '' %> <%= item.overdue ? 'overdue' : '' %> priority-<%= item.priority %>" id="card-<%= item.id %>">
+
+        <!-- Toggle complete -->
+        <form action="/toggle" method="post" class="toggle-form">
+          <input type="hidden" name="itemId" value="<%= item.id %>" />
+          <button type="submit" class="check-btn <%= item.completed ? 'checked' : '' %>" title="Toggle complete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </form>
+
+        <!-- Task body -->
+        <div class="task-body">
+          <!-- View mode -->
+          <div class="view-mode" id="view-<%= item.id %>">
+            <div class="task-top">
+              <span class="task-title"><%= item.title %></span>
+              <span class="priority-badge priority-<%= item.priority %>"><%= item.priority %></span>
+            </div>
+            <div class="task-meta">
+              <span class="cat-tag"><%= item.category %></span>
+              <% if(item.due_date){ %>
+                <span class="due-tag <%= item.overdue ? 'overdue-tag' : '' %>">
+                  <%= item.overdue ? '⚠' : '📅' %> <%= item.due_date %>
+                </span>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Edit mode -->
+          <form class="edit-form" action="/edit" method="post" id="edit-<%= item.id %>" style="display:none">
+            <input type="hidden" name="updatedItemId" value="<%= item.id %>" />
+            <div class="edit-row-main">
+              <input type="text" name="updatedItemTitle" value="<%= item.title %>" class="edit-input" autocomplete="off" required />
+            </div>
+            <div class="edit-row-meta">
+              <select name="updatedPriority" class="meta-select">
+                <option value="low" <%= item.priority==='low' ? 'selected' : '' %>>🟢 Low</option>
+                <option value="medium" <%= item.priority==='medium' ? 'selected' : '' %>>🟡 Medium</option>
+                <option value="high" <%= item.priority==='high' ? 'selected' : '' %>>🔴 High</option>
+              </select>
+              <input type="text" name="updatedCategory" value="<%= item.category %>" class="meta-input" list="cat-list" />
+              <input type="date" name="updatedDueDate" value="<%= item.due_date || '' %>" class="meta-input date-input" />
+              <button type="submit" class="save-btn">Save</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Actions -->
+        <div class="task-actions">
+          <button class="icon-btn edit-toggle-btn" onclick="toggleEdit('<%= item.id %>')" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <form action="/delete" method="post" onsubmit="return confirm('Delete this task?')">
+            <input type="hidden" name="deleteItemId" value="<%= item.id %>" />
+            <button type="submit" class="icon-btn delete-btn" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </form>
+        </div>
+
+      </div>
+      <% } %>
+    </div>
+  </section>
+</div>
+
+<script>
+  function toggleEdit(id) {
+    const view = document.getElementById('view-' + id);
+    const form = document.getElementById('edit-' + id);
+    const isEditing = form.style.display !== 'none';
+    view.style.display = isEditing ? 'block' : 'none';
+    form.style.display = isEditing ? 'none' : 'flex';
+    if (!isEditing) form.querySelector('input[type="text"]').focus();
+  }
+
+  // Animate cards in
+  document.querySelectorAll('.task-card').forEach((card, i) => {
+    card.style.animationDelay = `${i * 40}ms`;
+    card.classList.add('animate-in');
+  });
+</script>
+
+<%- include('partials/footer.ejs'); -%>
