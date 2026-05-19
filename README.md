@@ -2,23 +2,6 @@
 
 A modern, full-featured Todo List built with **Node.js**, **Express**, **EJS**, and **PostgreSQL**.
 
-## ✨ What's New in v2
-
-| Feature | v1 | v2 |
-|---|---|---|
-| Task priorities | ❌ | ✅ Low / Medium / High |
-| Categories | ❌ | ✅ Custom categories |
-| Due dates | ❌ | ✅ With overdue detection |
-| Mark complete | ❌ | ✅ Toggle completion |
-| Filters | ❌ | ✅ All / Active / Done / Overdue |
-| Sort | ❌ | ✅ By date, priority, or due date |
-| Stats panel | ❌ | ✅ Live task counts |
-| Bulk clear | ❌ | ✅ Clear all completed |
-| Dark UI | ❌ | ✅ Sleek dark theme |
-| Mobile ready | ❌ | ✅ Responsive layout |
-| Env config | ❌ | ✅ `.env` with dotenv |
-| Deploy ready | ❌ | ✅ Railway / Render / Fly.io |
-
 ---
 
 ## 🏃 Running Locally
