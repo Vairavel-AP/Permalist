@@ -65,7 +65,7 @@
           <% if(filter === 'completed') { %>Done ✓
           <% } else if(filter === 'overdue') { %>Overdue ⚠
           <% } else if(filter === 'active') { %>In Progress
-          <% } else { %>Today's List
+          <% } else { %>Today List
           <% } %>
         </h1>
         <p class="page-sub"><%= new Date().toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'}) %></p>
